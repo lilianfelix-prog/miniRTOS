@@ -5,6 +5,8 @@
 #define F_BCK 0x02
 #define f_SSD 0x03
 
+#define MAX_TASK 32
+
 typedef struct uint8_t stack_t;
 
 typedef struct uint8_t state_t;

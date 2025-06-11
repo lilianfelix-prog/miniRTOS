@@ -61,6 +61,7 @@ SECTIONS
     /* tells the loader to use the ROM addrs for loading but links RAM addrs for the code */ 
     . = ALIGN(4);
     __data_end;
+    __sidata = LOADADDR(.data);  /* load rom addr needed for copy */
 
     /* uninitialized global variable */
     __bss_start = .;

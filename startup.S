@@ -22,11 +22,11 @@ _start:
     la   a2, __data_end   //load data end addr to a2 register
 
 L_copy_loop:
-    bgtu a1, a2, L_bss_init //when ram start addr == end addr branch
-    LOAD t0, (a0)
-    STOR t0, (a1)
-                       //increments addr rom and ram 
-    addi a0, a0, 4     //registers are 4 bytes
+    bgeu a1, a2, L_bss_init //when ram start addr >= end addr branch
+    LOAD t0, (a0)           //dereferenced load t0 reg to a0 addr
+    STOR t0, (a1)           //dereferenced store t0 reg to a1 adddr
+                            //increments addr rom and ram 
+    addi a0, a0, 4          //registers are 4 bytes
     addi a1, a1, 4
     j L_copy_loop
 
@@ -35,10 +35,25 @@ L_bss_init:
     la a0, __bss_start   //load bss start addr in a0
     la a1, __bss_end     //load bss end addr in a1
 
-    bgtu a0, a2, L_next
-    STOR zero, (a0)
-    addi a0, a0, 4
+    bgeu a0, a2, L_next  //when start addr >= end addr branch
+    STOR zero, (a0)      //dereferenced store 0 at a0 addr
+    addi a0, a0, 4       //increment 4 bytes 
 
 L_next:
+    #ifdef __riscv_fdiv  //if floating-point unit is enabled
+        li t0, (1 << 13)
+        csrs mstatus, t0 //FPU status
+        fsrm x0          //rounding mode set to nearest
+    #endif
+    #ifdef __riscv_vector //if vector processing unit is enabled
+        li          t0, (1 << 9)
+        csrs        mstatus, t0
+    #endif
+L_end:
+    //reset reg to zero
+    li a0, 0
+    li a1, 0
+    li a2, 0
+    jal main
 
 

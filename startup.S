@@ -55,5 +55,4 @@ L_end:
     li a1, 0
     li a2, 0
     jal main
-
-
+    ebreak

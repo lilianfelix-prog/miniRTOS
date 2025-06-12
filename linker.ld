@@ -16,12 +16,7 @@ SECTIONS
     /* start at top of ram and grows downwords */
     /* by putting the stack first instead of possible collision with heap a memory fault is triggered */
 
-    .stack :
-    {
-        . = ALIGN(8);
-        . += 0x1000; /* about 4K stack size */
-        _stack_top = .;
-    } >ram
+    
     
     /* initialize current addr ( . represent current addr) */
     __start = .;
@@ -33,7 +28,8 @@ SECTIONS
         KEEP(*(.text.startup))
 
         /* all other objects */
-        *(.text)
+        *(.text.entry)
+        *(.text .text.*)
 
     } >rom AT>rom     /* execute from addr in rom and store in addr in rom */
 
@@ -70,18 +66,13 @@ SECTIONS
         *(.bss)
     } >ram    /* no loadable content so no LMA */
     .= ALIGN(8);
-    __bss_end = .;
     __end = .;
 
     /* end of static data, start of heap memory */
-
-    /* initialize stack and stack top needed for startup */
-    /* start at top of ram and grows downwords */
     .stack :
-    {
-        . = ALIGN(16);
-        . += ORIGIN(ram);
-        _stack_top = .;
-    } >ram
-
+        {
+            . = ALIGN(8);
+            . += 0x1000; /* about 4K stack size */
+            _stack_top = .;
+        } >ram
 }

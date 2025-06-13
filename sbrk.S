@@ -1,5 +1,5 @@
 
-
+//better to use the c version
 .section .data
 
 heap_pos:

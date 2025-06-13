@@ -7,18 +7,18 @@
 
 #define MAX_TASK 32
 
-typedef struct uint8_t stack_t;
+#define STACK_DEPTH 4096
 
-typedef struct uint8_t state_t;
-
-typedef struct uint8_t priority_t;
+typedef struct{
+    void (* function)(void *arg);
+} taskFunction_t;
 
 typedef struct
 {
     //variable shared between Interupt are volatile, can change unexpectedly
-    volatile stack_t* ptStackTop; // startStack + size
-    state_t* taskState;
-    priority_t* taskPriority;
-    stack_t* startStack;
-
+    volatile uint8_t* ptBlockTop; // startStack + size
+    uint8_t* taskState;
+    uint8_t* taskPriority;  
+    taskFunction_t* taskFunction;
+    uint8_t* ptStartBlock;
 } taskTCB_t;

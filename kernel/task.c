@@ -5,7 +5,10 @@
 * - pointer to task context (env + register values)
 */
 
-#include "include/task.h"
+#include "../include/task.h"
+#include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
 
 //store task by state
 static taskTCB_t readyTaskList[MAX_TASK];
@@ -14,11 +17,22 @@ static taskTCB_t blockedTaskList[MAX_TASK];
 
 
 
-static taskTCB_t* init_task(void* func)
+static taskTCB_t* init_task(taskFunction_t* func, uint8_t priority, uint8_t status)
 {
     taskTCB_t* newTaskTCB;
+    
+    newTaskTCB->ptStartBlock = newTaskTCB;
+    //fill stack with zero to debug
+    memset(newTaskTCB->ptStartBlock, 0x00, sizeof(taskTCB_t));
 
-    stack_t* pStartStack = heap1Malloc(sizeof(func));
+    //initialse pointers to TCB assuming the stack grows downward 
+    newTaskTCB->ptBlockTop = ( newTaskTCB - sizeof(taskTCB_t) );
 
+    newTaskTCB->taskFunction = func;
+    newTaskTCB->taskPriority = priority;
+    newTaskTCB->taskState = status;
+
+    return newTaskTCB;
 
 }
+

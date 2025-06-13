@@ -42,3 +42,8 @@ list_t* listInit(uint8_t type)
 
     return newList;
 }
+
+void initialiseItemList(taskTCB_t* task, uint8_t* status, int8_t toSet)
+{
+    
+}

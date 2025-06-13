@@ -2,7 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 
-extern void* _sbrk(__intptr_t increment);
+extern void* _sbrk(int increment);
 
 void* heap1Malloc(size_t size)
 {

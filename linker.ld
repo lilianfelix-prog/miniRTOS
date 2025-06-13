@@ -28,7 +28,7 @@ SECTIONS
         KEEP(*(.text.startup))
 
         /* all other objects */
-        *(.text.entry)
+        *(.text.entry .text.entry.*)
         *(.text .text.*)
 
     } >rom AT>rom     /* execute from addr in rom and store in addr in rom */
@@ -43,6 +43,7 @@ SECTIONS
     .rodata :
     {
         *(.rodata)
+        *(.rodata .rodata.*)
     } >rom AT>rom 
 
     . = ALIGN(4);
@@ -52,10 +53,12 @@ SECTIONS
     __data_start = .;
     .data :
     {
-        *(.data)
+        *(.data .data.*)
+        . = ALIGN(8);
+        PROVIDE( __global_pointer$ = . + 0x800 );
+        . = ALIGN(4);
     } >ram AT>rom     /* variable in ram at runtime, stored initial value in rom */ 
     /* tells the loader to use the ROM addrs for loading but links RAM addrs for the code */ 
-    . = ALIGN(4);
     __data_end;
     __sidata = LOADADDR(.data);  /* load rom addr needed for copy */
 
@@ -70,9 +73,9 @@ SECTIONS
 
     /* end of static data, start of heap memory */
     .stack :
-        {
-            . = ALIGN(8);
-            . += 0x1000; /* about 4K stack size */
-            _stack_top = .;
-        } >ram
+    {
+        . = ALIGN(8);
+        . += 0x1000; /* about 4K stack size */
+        _stack_top = .;
+    } >ram
 }

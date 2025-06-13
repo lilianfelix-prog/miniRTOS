@@ -9,11 +9,12 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include "task_handler.c"
 
 //store task by state
-static taskTCB_t readyTaskList[MAX_TASK];
-static taskTCB_t suspendedTaskList[MAX_TASK];
-static taskTCB_t blockedTaskList[MAX_TASK];
+static list_t* readyTaskList;
+static list_t* suspendedTaskList;
+static list_t* blockedTaskList;
 
 
 
@@ -32,6 +33,12 @@ static taskTCB_t* init_task(taskFunction_t* func, uint8_t priority, uint8_t stat
     newTaskTCB->taskPriority = priority;
     newTaskTCB->taskState = status;
 
+    if (status == F_RDY && readyTaskList != NULL)
+    {
+        readyTaskList = listInit(F_RDY);
+    }
+    initialiseItemList();
+    
     return newTaskTCB;
 
 }

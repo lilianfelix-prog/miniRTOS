@@ -5,7 +5,7 @@
 #define F_BCK 0x02
 #define f_SSD 0x03
 
-#define MAX_TASK 32
+#define MAX_TASK 16
 
 #define STACK_DEPTH 4096
 

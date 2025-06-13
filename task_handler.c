@@ -1,7 +1,21 @@
 #include "include/task.h"
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
 #define MAX_SIZE 5
+
+
+//store task by state
+static list_t* readyTaskList;
+static list_t* suspendedTaskList;
+static list_t* blockedTaskList;
+
+/*
+* Simple RTOS task definition
+* preemptive task assigned A TCB: 
+* - task state information
+* - pointer to task context (env + register values)
+*/
 
 //implementing a linked list to handle the task status lists
 
@@ -33,17 +47,58 @@ int addToListEnd(taskListItem_t* task, list_t* list)
     return 0;
 }
 
-list_t* listInit(uint8_t type)
-{
-    list_t* newList;
-    newList->listType = type; 
-    newList->index = 0;
-    newList->listEnd = NULL;
-
-    return newList;
-}
-
-void initialiseItemList(taskTCB_t* task, uint8_t* status, int8_t toSet)
+void listInit()
 {
     
+    readyTaskList->listType = F_RDY; 
+    readyTaskList->index = 0;
+    readyTaskList->listEnd = NULL;
+    
+    suspendedTaskList->listType = f_SSD; 
+    suspendedTaskList->index = 0;
+    suspendedTaskList->listEnd = NULL;
+
+    blockedTaskList->listType = F_BCK; 
+    blockedTaskList->index = 0;
+    blockedTaskList->listEnd = NULL;
+
+    return 0;
+}
+
+int initialiseItemList(taskTCB_t* task, list_t* list)
+{
+    taskListItem_t* newTaskItem;
+    newTaskItem->listItem = task;
+    newTaskItem->nextTask = NULL;
+    newTaskItem->prevTask = NULL;
+
+    if(addToListEnd(newTaskItem, list) < 0) return -1;
+    return 0;
+}
+
+static taskTCB_t* init_task(taskFunction_t* func, uint8_t priority, uint8_t status)
+{
+    taskTCB_t* newTaskTCB;
+    
+    newTaskTCB->ptStartBlock = newTaskTCB;
+    //fill stack with zero to debug
+    memset(newTaskTCB->ptStartBlock, 0x00, sizeof(taskTCB_t));
+
+    //initialse pointers to TCB assuming the stack grows downward 
+    newTaskTCB->ptBlockTop = ( newTaskTCB - sizeof(taskTCB_t) );
+
+    newTaskTCB->taskFunction = func;
+    newTaskTCB->taskPriority = priority;
+    newTaskTCB->taskState = status;
+
+    list_t* setList;
+
+    if (status == F_RDY) setList = readyTaskList;
+    if (status == F_BCK) setList = blockedTaskList;
+    if (status == f_SSD) setList = suspendedTaskList;
+
+    initialiseItemList(newTaskTCB, setList);
+    
+    return newTaskTCB;
+
 }

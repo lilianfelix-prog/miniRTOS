@@ -7,16 +7,11 @@ MEMORY
 {
     /* memory area */
     rom (rxa) : ORIGIN = 0x80000000, LENGTH = 512K
-    ram (wxa) : ORIGIN  = 0x80080000, LENGH = 1024K
+    ram (wxa) : ORIGIN  = 0x80080000, LENGTH = 1024K
 }
 SECTIONS
 {
 
-    /* initialize stack and stack top needed for startup */
-    /* start at top of ram and grows downwords */
-    /* by putting the stack first instead of possible collision with heap a memory fault is triggered */
-    
-    
     /* initialize current addr ( . represent current addr) */
     __start = .;
     __text_start = .;
@@ -71,10 +66,14 @@ SECTIONS
     __end = .;
 
     /* end of static data, start of heap memory */
+
+    /* initialize stack and stack top needed for startup */
+    /* start at top of ram and grows downwords */
+    _stack_top = ORIGIN(ram) + LENGTH(ram);
     .stack :
     {
+        . = _stack_top - 0x1000; /* Reserve 4KB */
         . = ALIGN(8);
-        . += 0x1000; /* about 4K stack size */
-        _stack_top = .;
+        _stack_bottom = .;
     } >ram
 }

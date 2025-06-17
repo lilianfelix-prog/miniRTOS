@@ -36,4 +36,10 @@ Riscv vector registers can be seen as a implementation of a SIMD architecture (S
 - A 32 bits vector register can store 1 4-bytes element, 2 2-bytes elements, 4 1-byte elements.
 - There are 5 types of vector specific instruction: Vector load, store, atomic operation, arithmetic (scalar-vector, vector-vector, vector-matrix MMV ), configurations instructions.
 - A key feature of these vector registers is their length and format change dynamically base on configurations instructions. This allows higher throughput on operations with vectors of differents lengths, running in a single loop.
-- 
+- Implement it, each hart(thread) that support vector extension need to define the max size in bits of the vector element that an operation can produce or consume (ELEN >= 8), but also the num of bits in a vector register (VLEN >= ELEN).
+ex of vtype registers: vsetvli a4, a0, e8, m1, ta, ma   # Byte vector for predicate calc
+                       vsetvli x0, a0, e32, m4, ta, mu  # Vector of 32-bit values.
+These registers have 5 fields, vill: illegal value if set, XLEN-2:8 : reserved if non-zero, vma : vector mask agnostic, vta ; vector tail agnostic, vsew : selected element width setting, vlmul : vector register group multiplier setting.
+SEW determines the number of elements per vector registers, ex: VLEN = 128 bits then SEW=64 -> 2 elements, SEW=32 4 elements ...
+LMUL is used to groupe vector registers together, so an vector instruction can operate on multiple vector register, if LMUL value is fractional it will reduce the registers bit size.
+  

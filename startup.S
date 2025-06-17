@@ -23,8 +23,8 @@ _start:
 
 L_copy_loop:
     bgeu a1, a2, L_bss_init //when ram start addr >= end addr branch
-    LOAD t0, (a0)           //dereferenced load t0 reg to a0 addr
-    STOR t0, (a1)           //dereferenced store t0 reg to a1 adddr
+    lw t0, (a0)           //dereferenced load t0 reg to a0 addr
+    sw t0, (a1)           //dereferenced store t0 reg to a1 adddr
                             //increments addr rom and ram 
     addi a0, a0, 4          //registers are 4 bytes
     addi a1, a1, 4
@@ -36,7 +36,7 @@ L_bss_init:
     la a1, __bss_end     //load bss end addr in a1
 
     bgeu a0, a2, L_next  //when start addr >= end addr branch
-    STOR zero, (a0)      //dereferenced store 0 at a0 addr
+    sw zero, (a0)      //dereferenced store 0 at a0 addr
     addi a0, a0, 4       //increment 4 bytes 
 
 L_next:

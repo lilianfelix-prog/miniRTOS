@@ -15,7 +15,6 @@ SECTIONS
     /* initialize stack and stack top needed for startup */
     /* start at top of ram and grows downwords */
     /* by putting the stack first instead of possible collision with heap a memory fault is triggered */
-
     
     
     /* initialize current addr ( . represent current addr) */

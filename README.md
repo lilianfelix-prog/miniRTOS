@@ -1,6 +1,6 @@
 # miniRTOS
 
-###notes
+### notes
 In the process of making this I ended up diving a bit deeper into a few topics mainly about the RISCV architecture,
 so here are my notes:
 
@@ -31,4 +31,9 @@ In this stage the single cycle operations are forwarded to wait for 2 cycles ope
 - Writeback:
 Write 1 and 2 cylces instructions result while decode stage is reading for future instructions in file registers. ! This can cause some problems since it can write and read from same register [^2].
 
-
+#### Vector instruction pipeline:
+Riscv vector registers can be seen as a implementation of a SIMD architecture (Single instruction multiple data).
+- A 32 bits vector register can store 1 4-bytes element, 2 2-bytes elements, 4 1-byte elements.
+- There are 5 types of vector specific instruction: Vector load, store, atomic operation, arithmetic (scalar-vector, vector-vector, vector-matrix MMV ), configurations instructions.
+- A key feature of these vector registers is their length and format change dynamically base on configurations instructions. This allows higher throughput on operations with vectors of differents lengths, running in a single loop.
+- 

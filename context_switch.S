@@ -38,4 +38,11 @@ startFirstTask:
     lw sp, 0(sp) // load the sp in the first element of the TCB struct (startStack + size)
     lw x1, 0(sp) // replace the sp in TCB struct with task ret addr
 
+
+interuptTrapHandler:
+    blt pullNextTime, pullMachineTimerCompareRegister, exit_no_switch
+    
+    UPDATE_MTIMER_REGISTER
+    call taskSwitchContext
+exit_no_switch:
     

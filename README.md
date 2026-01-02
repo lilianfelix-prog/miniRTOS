@@ -1,5 +1,12 @@
 # miniRTOS
 
+
+### Developement: 
+Source ESP_IDF environment for path to idf.py, python venv, toolchains:
+`. ~/esp-idf/export.sh`
+Activate esptool venv:
+`source miniRTOS-venv/bin/activate`
+
 ### notes
 In the process of making this I ended up diving a bit deeper into a few topics mainly about the RISCV architecture,
 so here are my notes:

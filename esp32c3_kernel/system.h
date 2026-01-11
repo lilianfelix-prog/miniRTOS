@@ -134,7 +134,7 @@ static inline uint8_t uart_read_byte(UART_port i)
 }
 
 // Write data byte to uart FIFO register
-static inline void uart_write_byte(UART_port i, uint8_t b)
+static inline void uart_write_byte(UART_port i, const uint8_t *b)
 {
     REG_WRITE(UART_FIFO_REG(i), b);
 }

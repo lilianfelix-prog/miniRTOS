@@ -12,6 +12,8 @@
 #define REG(x) ((volatile uint32_t *) (x))
 #define READ_REG(x)  (*(volatile uint32_t *) (x))
 #define REG_WRITE(x, a) (*(volatile uint32_t *) (x) = (a))
+#define REG_SET_BIT(x, a) (*(volatile uint32_t *) (x) |= (a))
+#define REG_CLR_BIT(x, a) (*(volatile uint32_t *)(x) &= ~(a))
 
 #define C3_SYSTEM 0x600c0000
 #define C3_SENSITIVE 0x600c1000
@@ -66,13 +68,44 @@ typedef enum
 typedef enum 
 {
     DISABLE,
-    UNABLE
+    ENABLE
 } UART_state;
+
+typedef enum {
+    UART_DATA_5_BITS   = 0x0,    /*!< word length: 5bits*/
+    UART_DATA_6_BITS   = 0x1,    /*!< word length: 6bits*/
+    UART_DATA_7_BITS   = 0x2,    /*!< word length: 7bits*/
+    UART_DATA_8_BITS   = 0x3,    /*!< word length: 8bits*/
+    UART_DATA_BITS_MAX = 0x4,
+} uart_word_length_t;
+
+typedef enum {
+    UART_STOP_BITS_1   = 0x1,  /*!< stop bit: 1bit*/
+    UART_STOP_BITS_1_5 = 0x2,  /*!< stop bit: 1.5bits*/
+    UART_STOP_BITS_2   = 0x3,  /*!< stop bit: 2bits*/
+    UART_STOP_BITS_MAX = 0x4,
+} uart_stop_bits_t;
+
+typedef enum {
+    UART_PARITY_DISABLE  = 0x0,  /*!< Disable UART parity*/
+    UART_PARITY_EVEN     = 0x2,  /*!< Enable UART even parity*/
+    UART_PARITY_ODD      = 0x3   /*!< Enable UART odd parity*/
+} uart_parity_t;
+
+#define UART0_TX_SIGNAL  6
+#define UART0_RX_SIGNAL  7
+
+#define TX_FIFO_SIZE 128
 // The addresses in this section are relative to UART Controller base address provided
 /*
  * How the register bit mask works:
  * UART_FIFO_REG & UART_REG_FLAG_MASK = (flag's register region according to specs)
  */
+
+//enable UART clock.
+#define SYSTEM_PERIP_CLK_EN0_REG (C3_SYSTEM + 0x10)
+#define SYSTEM_UART_CLK_EN (BIT(2))
+
 
 // Register 26.1. UART_FIFO_REG (0x0000)
 #define UART_FIFO_REG(i)   (C3_UART(i) + 0x00)
@@ -103,8 +136,13 @@ typedef enum
 #define CLKDIV_OFFSET 0
 
 #define UART_CONF0_REG(i)   (C3_UART(i) + 0x20)
+// enable UART RAM clock gating
 #define UART_MEM_CLK_EN  (BIT(28))
 #define MEM_CLK_EN_OFFSET 28
+
+// force clock on register
+#define UART_CLK_EN (BIT(25))
+
 /*description: Set this bit to reset the uart transmit-FIFO.*/
 #define UART_TXFIFO_RST  (BIT(18))
 /*description: Set this bit to reset the uart receive-FIFO.*/
@@ -121,6 +159,8 @@ typedef enum
 #define UART_PARITY  (BIT(0))
 #define PARITY_OFFSET 0
 
+#define UART_STATUS_REG(i)  (C3_UART(i) + 0x1c)
+#define UART_TXFIFO_CNT ((0x3FF)<<(16))
 
 #define UART_CONF1_REG(i)  (C3_UART(i) + 0x24)
 /*interupt when receiver data > this val*/
@@ -128,7 +168,6 @@ typedef enum
 #define FULL_THR_OFFSET 0x0
 /*interupt when tx fifo is less then this val*/
 #define UART_TXFIFO_EMPTY_THRHD  ((0x1FF)<<(9))
-//used to get addr of flag in order to write 
 #define EMPTY_THR_OFFSET 0x9
 
 #define UART_CLK_CONF_REG(i)   (C3_UART(i) + 0x78)
@@ -152,24 +191,89 @@ typedef enum
 /*description: The  denominator of the frequency divider factor.*/
 #define UART_SCLK_DIV_B  0x0000003F
 
-static inline void uart_set_mem_clk(UART_t i, UART_state n)
+// Enables periph clock (APB, bus clock)
+static inline void uart_set_periph_clk(UART_state n)
 {
-    REG_WRITE((UART_CONF0_REG(i) + MEM_CLK_EN_OFFSET), n);   
+    if(n == DISABLE){
+        REG_CLR_BIT(SYSTEM_PERIP_CLK_EN0_REG, SYSTEM_UART_CLK_EN);  
+    } else {
+        REG_SET_BIT(SYSTEM_PERIP_CLK_EN0_REG, SYSTEM_UART_CLK_EN);
+    }
 }
 
-static inline void uart_reset_core(UART_t i, UART_state n)
+static inline void uart_set_fifo_clk(UART_port i)
 {
-    REG_WRITE((UART_CLK_CONF_REG(i) + RST_CORE_OFFSET), n);
+    REG_SET_BIT(UART_CONF0_REG(i), UART_MEM_CLK_EN);   
 }
 
-static inline void uart_set_clk_source(UART_t i, soc_periph_uart_clk_src_legacy_t n)
+//TODO: read register once 
+static inline void uart_rst_tx_fifo(UART_port i)
 {
-    REG_WRITE((UART_CLK_CONF_REG(i) + SCLK_SEL_OFFSET), n);
+    REG_CLR_BIT(UART_CONF0_REG(i), UART_TXFIFO_RST);
+    REG_SET_BIT(UART_CONF0_REG(i), UART_TXFIFO_RST);
 }
 
-static inline void uart_enable_clock(UART_t i, UART_state n)
+static inline void uart_rst_rx_fifo(UART_port i)
 {
-    REG_WRITE((UART_CLK_CONF_REG(i) + SCLK_EN_OFFSET), n);
+    REG_CLR_BIT(UART_CONF0_REG(i), UART_RXFIFO_RST);
+    REG_SET_BIT(UART_CONF0_REG(i), UART_RXFIFO_RST);
+}
+
+static inline void uart_set_data_bits(UART_port i, uart_word_length_t n)
+{
+    REG_CLR_BIT(UART_CONF0_REG(i), UART_BIT_NUM);
+    REG_SET_BIT(UART_CONF0_REG(i), ((n << BIT_NUM_OFFSET) & UART_BIT_NUM));
+}
+
+static inline void uart_enable_flow_control(UART_port i, UART_state n)
+{
+    if(n == DISABLE){
+        REG_CLR_BIT(UART_CONF0_REG(i), UART_CLK_EN);  
+    } else {
+        REG_SET_BIT(UART_CONF0_REG(i), UART_CLK_EN);
+    }
+}
+
+static inline void uart_set_clk_on(UART_port i, UART_state n)
+{
+    if(n == DISABLE){
+        REG_CLR_BIT(UART_CONF0_REG(i), UART_TX_FLOW_EN);  
+    } else {
+        REG_SET_BIT(UART_CONF0_REG(i), UART_TX_FLOW_EN);
+    }
+}
+
+static inline void uart_set_stop_bit(UART_port i, uart_stop_bits_t n)
+{
+    REG_CLR_BIT(UART_CONF0_REG(i), UART_STOP_BIT_NUM);
+    REG_SET_BIT(UART_CONF0_REG(i), ((n << STOP_BIT_OFFSET) & UART_STOP_BIT_NUM));
+}
+
+static inline void uart_set_parity(UART_port i, uart_parity_t n)
+{
+    REG_CLR_BIT(UART_CONF0_REG(i), UART_PARITY);
+    REG_SET_BIT(UART_CONF0_REG(i), ((n << PARITY_OFFSET) & UART_PARITY));
+}
+
+static inline void uart_reset_core(UART_port i)
+{
+    REG_SET_BIT(UART_CLK_CONF_REG(i), UART_RST_CORE);
+    REG_CLR_BIT(UART_CLK_CONF_REG(i), UART_RST_CORE);
+}
+
+static inline void uart_set_clk_source(UART_port i, soc_periph_uart_clk_src_legacy_t n)
+{
+    REG_CLR_BIT(UART_CLK_CONF_REG(i), UART_SCLK_SEL);
+    REG_SET_BIT(UART_CLK_CONF_REG(i), ((n << SCLK_SEL_OFFSET) & UART_SCLK_SEL));
+}
+
+static inline void uart_set_clock(UART_port i, UART_state n)
+{
+    if(n == ENABLE){
+        REG_SET_BIT(UART_CLK_CONF_REG(i), UART_SCLK_EN);
+    } else {
+        REG_CLR_BIT(UART_CLK_CONF_REG(i), UART_SCLK_EN);
+    }
 }
 
 /*
@@ -177,7 +281,7 @@ static inline void uart_enable_clock(UART_t i, UART_state n)
  * integral part = floor(divider)
  * frag part = round((divider - integral part) * 16 )
  */
-static inline void uart_set_baudrate(UART_t i, uint32_t clk_hz, uint32_t baud)
+static inline void uart_set_baudrate(UART_port i, uint32_t clk_hz, uint32_t baud)
 {
     double div = (double)clk_hz / (double)baud;
     uint32_t div_int = (uint32_t)div; //floors div (type cast rounds down)
@@ -200,31 +304,87 @@ static inline void uart_set_baudrate(UART_t i, uint32_t clk_hz, uint32_t baud)
 
 static inline void set_txfifo_empty_thr(UART_port i, uint16_t thr_val)
 {
-    REG_WRITE((UART_CONF1_REG(i) + EMPTY_THR_OFFSET), thr_val);
+    REG_CLR_BIT(UART_CONF1_REG(i), UART_TXFIFO_EMPTY_THRHD);
+    REG_SET_BIT(UART_CONF1_REG(i), ((thr_val << EMPTY_THR_OFFSET) & UART_TXFIFO_EMPTY_THRHD));
 }
 
-/*will return 1 if tx fifo is not full*/
-static inline bool txfifo_status(UART_port i)
+/*will return 0 if tx fifo is full*/
+static inline bool txfifo_has_space(UART_port i)
 {
-    return (bool)(READ_REG(UART_INT_RAW_REG(i)) & UART_TXFIFO_EMPTY_INT_RAW);
+    return ((READ_REG(UART_STATUS_REG(i)) & UART_TXFIFO_CNT) < TX_FIFO_SIZE);
 }
 
 
-// Read the data byte in uart FIFO register
-static inline uint8_t uart_read_byte(UART_port i)
-{
-    return (uint8_t)(READ_REG(UART_FIFO_REG(i)) & UART_RXFIFO_RD_BYTE);
-}
+/* ----- GPIO ----- */
 
-// Write data byte to uart FIFO register
-static inline void uart_write_byte(UART_port i, uint8_t b)
+typedef enum 
 {
-    if(txfifo_status(i)){
-        REG_WRITE(UART_FIFO_REG(i), b);
+    GPIO0, GPIO1, GPIO2, GPIO3, GPIO4, GPIO5, GPIO6, GPIO7,
+    GPIO8, GPIO9, GPIO10, GPIO11, GPIO12, GPIO13, GPIO14,
+    GPIO15, GPIO16, GPIO17, GPIO18, GPIO19, GPIO20, GPIO21
+} GPIO_pin;
+
+// enable read/write of the gpio
+typedef enum
+{
+    R,
+    W,
+    R_W
+} GPIO_state;
+
+// The values of bit 0 ~ bit 21 correspond to the output value of GPIO0 ~ GPIO21 respectively
+#define GPIO_OUT_REG (C3_GPIO + 0x04)
+#define GPIO_OUT_DATA_ORIG (BIT(0))
+
+#define GPIO_OUT_W1TS_REG (C3_GPIO + 0x08)
+
+#define GPIO_OUT_W1TC_REG (C3_GPIO + 0x0c)
+
+//write 1 to set GPIO_ENABLE_REG
+#define GPIO_ENABLE_W1TS_REG (C3_GPIO + 0x24)
+
+//write 1 to clear GPIO_ENABLE_REG
+#define GPIO_ENABLE_W1TC_REG (C3_GPIO + 0x28)
+
+#define GPIO_FUNC_OUT_SEL_CFG_REG(i) (C3_GPIO + (0x554 + (4*i)))
+/* 
+ * Selection control for GPIO output n. If a value Y (0<=Y<128) is written to this
+ * field, the peripheral output signal Y will be connected to GPIO output n 
+ */
+#define GPIO_FUNC_OUT_SEL(i) (BIT(0))
+
+#define GPIO_ENABLE_REG (C3_GPIO + 0x20)
+/* GPIO output enable register for GPIO0 ~ 21. Bit0 ~ bit21 are corresponding to
+GPIO0 ~ 21 */
+#define GPIO_ENABLE_DATA (BIT(0))
+
+#define GPIO_IN_REG (C3_GPIO + 0x3c)
+// holds the input values signal of each GPIO pin 0 ~ 21
+#define GPIO_IN_DATA_NEXT (BIT(0))
+
+#define IO_MUX_GPIO_REG(i) (C3_IO_MUX + (0x04 + (4*i))) 
+// Input enable of the pin during sleep mode (necessary to enable for input)
+#define IO_MUX_GPIO_MCU_IE (BIT(4))
+#define MCU_IE_OFFSET 4
+
+/*
+ * Configure GPIO matrix --> IO MUX and then to a pin 
+ * pin 0 ~ 21
+ */
+static inline void gpio_enable_pin(GPIO_pin pin, GPIO_state state)
+{
+    if(state == W || state == R_W){
+        // enable corresponding GPIO pin x 
+        // register is atomic, only react to 1s
+        REG_WRITE(GPIO_ENABLE_W1TS_REG, BIT(pin));
+
+        // route UART0 TX to this GPIO
+        REG_WRITE(GPIO_FUNC_OUT_SEL_CFG_REG(pin), UART0_TX_SIGNAL);
     }
+
+    if(state == R || state == R_W){
+        // enable the input via IO MUX
+        REG_SET_BIT(IO_MUX_GPIO_REG(pin), IO_MUX_GPIO_MCU_IE);
+    }
+
 }
-
-
-
-
-

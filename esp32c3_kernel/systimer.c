@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "system.h"
-#include "periph.h"
 
 /**
  * @brief systimer's clock source is fixed to XTAL (40MHz), and has a fixed fractional divider (2.5).

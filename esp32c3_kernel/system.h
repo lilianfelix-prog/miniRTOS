@@ -125,7 +125,6 @@ uint64_t systimer_ticks_to_us(uint64_t ticks);
 uint64_t systimer_us_to_ticks(uint64_t us);
 uint64_t systimer_get_time(void);
 
-static inline void uart_init();
 
 // Read the data byte in uart FIFO register
 static inline uint8_t uart_read_byte(UART_port i)
@@ -134,7 +133,11 @@ static inline uint8_t uart_read_byte(UART_port i)
 }
 
 // Write data byte to uart FIFO register
-static inline void uart_write_byte(UART_port i, const uint8_t *b)
+static inline void uart_write_txfifo(UART_port i, const uint8_t *b, uint32_t w_len)
 {
-    REG_WRITE(UART_FIFO_REG(i), b);
+    for(uint32_t n = 0; n < w_len; n++){
+        // waits for space in TX FIFO before loading another byte
+        while(!txfifo_has_space(i)){ ; }
+        REG_WRITE(UART_FIFO_REG(i), b[n]);
+    }
 }

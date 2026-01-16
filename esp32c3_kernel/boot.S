@@ -5,16 +5,12 @@
 .global _start /* prevent instructions following _start to be disassembled by objdump */
 
 _start:
-    
-    la gp, __global_pointer$
 
     // primary hart (main hardware thread)
     //  CSR instruction read-modify-write control and status registers
     csrr a0, mhartid    //write hart id to a0 function arg register
-    li   a1, 0          //load hart index
-    bne  a0, a1, L_sec      //branch if not equal 
 
-    la sp,    //load top of stack addr from linker.ld in sp register
+    la sp, _stack_top  //load top of stack addr from linker.ld in sp register
 
     //loading .data section
     la   a0, __sidata     //load data addr from rom to a0 register

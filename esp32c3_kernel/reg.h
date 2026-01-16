@@ -61,8 +61,8 @@
 // UART interface 0 or 1
 typedef enum
 {
-    UART0,
-    UART1
+    UART0 = 0,
+    UART1 = 1
 } UART_port;
 
 typedef enum 
@@ -101,6 +101,8 @@ typedef enum {
  * How the register bit mask works:
  * UART_FIFO_REG & UART_REG_FLAG_MASK = (flag's register region according to specs)
  */
+
+ #define C3_UART(i) ((i) == UART0 ? C3_UART0 : C3_UART1)
 
 //enable UART clock.
 #define SYSTEM_PERIP_CLK_EN0_REG (C3_SYSTEM + 0x10)
@@ -277,23 +279,14 @@ static inline void uart_set_clock(UART_port i, UART_state n)
 }
 
 /*
- * divider = clk_hz
- * integral part = floor(divider)
- * frag part = round((divider - integral part) * 16 )
+ * 
  */
 static inline void uart_set_baudrate(UART_port i, uint32_t clk_hz, uint32_t baud)
 {
-    double div = (double)clk_hz / (double)baud;
-    uint32_t div_int = (uint32_t)div; //floors div (type cast rounds down)
-    uint32_t div_frag = (uint32_t)((div - div_int) * 16.0 + 0.5);  //rounds by type cast the num +0.5
+    uint32_t div_clk =  (clk_hz << 4) / baud;
+    uint32_t div_int = div_clk >> 4;
+    uint32_t div_frag = div_clk & 0xf;  
 
-    if(div_frag > 15){
-        div_frag = 0;
-        div_int += 1;
-    }
-
-    // UART_CLKDIV_FRAG [23:20] and UART_CLKDIV [11:0] reste is reserved (0)
-    // Contains only divider fields, the entire UART_CLKDIV_REG register is overwritten 
     uint32_t reg =
         ((div_int  & UART_CLKDIV) << CLKDIV_OFFSET) |
         ((div_frag & UART_CLKDIV_FRAG) << CLKDIV_FRAG_OFFSET);

@@ -9,7 +9,7 @@ FLASH_LENGTH = 0x800000-0x20;
 MEMORY
 {
     irom (RX) : ORIGIN = IROM_ADDR, LENGTH = FLASH_LENGTH
-    drom (R)  : ORIGIN = DROM_ADDR, LENGTH = FLASH_LENGTH
+    drom (RX)  : ORIGIN = DROM_ADDR, LENGTH = FLASH_LENGTH
     iram (RX) : ORIGIN = IRAM_ADDR, LENGTH = 128K
     dram (RW) : ORIGIN = DRAM_ADDR, LENGTH = 128K
 }
@@ -18,43 +18,39 @@ ENTRY(_start)
 
 SECTIONS
 {
-    .text : {
 
-        _text_start = ABSOLUTE(.);
-
+    .text ORIGIN(drom): {
+        *(.entry*)
         *(.text*)
-        *(.rodata*)
-
-        _text_end = ABSOLUTE(.);
+        *(.rodata .rodata* .srodata)
         
-    } > irom
-
-    .data : {
-
-        __data_start = ABSOLUTE(.);
+    } > drom
+    
+    __data_start = ABSOLUTE(.);
+    
+    .data ORIGIN(dram) : AT(__data_start) {
 
         *(.data*)
+	
+    } > dram
 
-        __data_end = ABSOLUTE(.);
-        . = ALIGN(4);
-
-    } > dram AT > irom
+    __data_end = __data_start + SIZEOF(.data);
+    . = ALIGN(4);
 
     __sidata = LOADADDR(.data);
 
-    .bss : {
+   
+    _bss_start = ABSOLUTE(.);
 
-        . = ALIGN (8);
-        _bss_start = ABSOLUTE(.);
+    .bss : {
 
         *(.bss*)
         *(COMMON)
 
-        . = ALIGN (8);
-        _bss_end = ABSOLUTE(.);
-
     } > dram
+
+    _bss_end = ABSOLUTE(.);
+
 }
 
-/* Stack at top of DRAM */
 _stack_top = ORIGIN(dram) + LENGTH(dram);

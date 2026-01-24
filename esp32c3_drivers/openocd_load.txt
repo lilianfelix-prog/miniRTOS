@@ -1,0 +1,60 @@
+Open On-Chip Debugger v0.12.0-esp32-20251215 (2025-12-15-18:17)
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : esp_usb_jtag: VID set to 0x303a and PID to 0x1001
+Info : esp_usb_jtag: capabilities descriptor set to 0x2000
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : esp_usb_jtag: serial (88:56:A6:6D:14:A8)
+Info : esp_usb_jtag: Device found. Base speed 40000KHz, div range 1 to 255
+Info : clock speed 40000 kHz
+Info : JTAG tap: esp32c3.tap0 tap/device found: 0x00005c25 (mfg: 0x612 (Espressif Systems), part: 0x0005, ver: 0x0)
+Info : [esp32c3] datacount=2 progbufsize=16
+Info : [esp32c3] Examined RISC-V core; found 1 harts
+Info : [esp32c3]  XLEN=32, misa=0x40101104
+Info : [esp32c3] Examination succeed
+Info : [esp32c3] starting gdb server on 3333
+Info : Listening on port 3333 for gdb connections
+Info : [esp32c3] Hart unexpectedly reset!
+Info : [esp32c3] Reset cause (12) - (Software CPU reset)
+Info : accepting 'gdb' connection on tcp/3333
+Info : [esp32c3] Target halted, PC=0x4200BA98, debug_reason=00000000
+Warn : No symbols for FreeRTOS!
+Info : Flash mapping 0: 0x10020 -> 0x3c020020, 40 KB
+Info : Flash mapping 1: 0x20020 -> 0x42000020, 94 KB
+Info : Auto-detected flash bank 'esp32c3.flash' size 4096 KB
+Info : Using flash bank 'esp32c3.flash' size 4096 KB
+Info : Flash mapping 0: 0x10020 -> 0x3c020020, 40 KB
+Info : Flash mapping 1: 0x20020 -> 0x42000020, 94 KB
+Info : Using flash bank 'esp32c3.irom' size 96 KB
+Info : Flash mapping 0: 0x10020 -> 0x3c020020, 40 KB
+Info : Flash mapping 1: 0x20020 -> 0x42000020, 94 KB
+Info : Using flash bank 'esp32c3.drom' size 44 KB
+Warn : Prefer GDB command "target extended-remote :3333" instead of "target remote :3333"
+Warn : RTOS FreeRTOS not detected. (GDB could not find symbol 'pxReadyTasksLists')
+Info : JTAG tap: esp32c3.tap0 tap/device found: 0x00005c25 (mfg: 0x612 (Espressif Systems), part: 0x0005, ver: 0x0)
+Info : [esp32c3] Reset cause (3) - (Software core reset)
+Memory Map (8 regions):
+----------------------------------------
+Type    Start Addr    Length    BlockSize
+----------------------------------------
+FLASH   0x00000000  0x00400000  0x00001000
+R/W     0x00400000  0x3bc20000  0x00000000
+FLASH   0x3c020000  0x0000b000  0x00001000
+R/W     0x3c02b000  0x03fd5000  0x00000000
+ROM     0x40000000  0x00060000  0x00000000
+R/W     0x40060000  0x01fa0000  0x00000000
+FLASH   0x42000000  0x00018000  0x00001000
+R/W     0x42018000  0xbdfe8000  0x00000000
+----------------------------------------
+Info : JTAG tap: esp32c3.tap0 tap/device found: 0x00005c25 (mfg: 0x612 (Espressif Systems), part: 0x0005, ver: 0x0)
+Info : [esp32c3] Reset cause (3) - (Software core reset)
+Info : PROF: Erased 4096 bytes in 140.525 ms
+Info : Padding image section 0 at 0x42000a42 with 2 bytes
+Info : PROF: Compressed 2604 bytes to 896 bytes in 0.179000ms
+Info : PROF: Data transferred in 34.418 ms @ 25.4227 KB/s
+Info : PROF: Wrote 2604 bytes in 4303.04 ms (data transfer time included)
+Info : JTAG tap: esp32c3.tap0 tap/device found: 0x00005c25 (mfg: 0x612 (Espressif Systems), part: 0x0005, ver: 0x0)
+Info : [esp32c3] Reset cause (3) - (Software core reset)
+
